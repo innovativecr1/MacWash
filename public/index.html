@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>McWash</title>
+
+  <!-- QR Scanner -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <!-- Razorpay -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+  <style>
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+    }
+
+    body{
+      font-family: Arial, sans-serif;
+      background:#0b0b0b;
+      color:white;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      height:100vh;
+    }
+
+    .container{
+      width:360px;
+      background:#161616;
+      padding:25px;
+      border-radius:20px;
+      border:1px solid #2a2a2a;
+      box-shadow:0 0 25px rgba(0,0,0,0.7);
+    }
+
+    h2{
+      text-align:center;
+      margin-bottom:20px;
+      font-size:28px;
+    }
+
+    button,
+    select{
+      width:100%;
+      padding:14px;
+      margin-top:15px;
+      border:none;
+      border-radius:14px;
+      font-size:16px;
+      outline:none;
+    }
+
+    /* Buttons */
+    button{
+      background:linear-gradient(135deg,#a855f7,#7c3aed);
+      color:white;
+      cursor:pointer;
+      transition:0.25s;
+      font-weight:bold;
+      box-shadow:0 0 15px rgba(168,85,247,0.35);
+    }
+
+    button:hover{
+      transform:scale(1.03);
+      background:linear-gradient(135deg,#9333ea,#6d28d9);
+      box-shadow:0 0 25px rgba(168,85,247,0.6);
+    }
+
+    select{
+      background:#242424;
+      color:white;
+      border:1px solid #3a3a3a;
+    }
+
+    #reader{
+      width:100%;
+      margin-top:20px;
+      border-radius:14px;
+      overflow:hidden;
+      background:black;
+      min-height:250px;
+    }
+
+    #reader video{
+      width:100% !important;
+      border-radius:14px;
+    }
+
+    #reader canvas{
+      display:none !important;
+    }
+
+    .price-box{
+      margin-top:18px;
+      padding:15px;
+      border-radius:14px;
+      background:#111827;
+      border:1px solid #1f2937;
+      text-align:center;
+      font-size:20px;
+      font-weight:bold;
+      color:#22c55e;
+    }
+
+    .info{
+      text-align:center;
+      margin-top:14px;
+      color:#9ca3af;
+      font-size:14px;
+    }
+
+    .machine-box{
+      height:250px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      background:#111827;
+      color:#22c55e;
+      font-size:42px;
+      font-weight:bold;
+      border-radius:14px;
+      border:1px solid #374151;
+      letter-spacing:3px;
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <h2>McWash</h2>
+
+    <!-- Scan Button -->
+    <button onclick="startScanner()">
+      Scan Machine
+    </button>
+
+    <!-- Camera -->
+    <div id="reader"></div>
+
+    <!-- Time -->
+    <select id="timeSelect" onchange="updatePrice()">
+
+      <option value="30">
+        30 Mins - ₹20
+      </option>
+
+      <option value="60">
+        60 Mins - ₹40
+      </option>
+
+      <option value="90">
+        90 Mins - ₹60
+      </option>
+
+      <option value="120">
+        120 Mins - ₹80
+      </option>
+        <option value="1.5">
+        1/2 Mins - ₹1
+      </option>
+
+    </select>
+
+    <!-- Amount -->
+    <div class="price-box" id="priceBox">
+      Amount: ₹20
+    </div>
+
+    <div class="info">
+      Scan QR → Select Time → Pay
+    </div>
+
+    <!-- Payment -->
+    <button onclick="makePayment()">
+      Pay Now
+    </button>
+
+  </div>
+
+
+  <script>
+
+    let scannedData = "";
+
+    // Start Scanner
+    function startScanner(){
+
+      const html5QrCode =
+        new Html5Qrcode("reader");
+
+      Html5Qrcode.getCameras()
+      .then(devices => {
+
+        if(devices && devices.length){
+
+          html5QrCode.start(
+
+            devices[0].id,
+
+            {
+              fps:10,
+              qrbox:250
+            },
+
+            // Success
+            (decodedText) => {
+
+              console.log(
+                "QR Code Data:",
+                decodedText
+              );
+
+              // Check QR starts with Mc-
+              if(decodedText.startsWith("Mc-")){
+
+                // Remove Mc-
+                const machineCode =
+                  decodedText.replace("Mc-","");
+
+                scannedData = machineCode;
+
+                // Stop scanner
+                html5QrCode.stop();
+
+                // Replace camera
+                document.getElementById(
+                  "reader"
+                ).innerHTML = `
+                  <div class="machine-box">
+                    ${machineCode}
+                  </div>
+                `;
+
+                alert(
+                  "Machine Connected!"
+                );
+
+              }
+
+              else{
+
+                alert(
+                  "Invalid Machine QR"
+                );
+
+              }
+
+            },
+
+            // Error
+            (errorMessage) => {
+              // Ignore
+            }
+
+          );
+
+        }
+
+      })
+
+      .catch(err => {
+        console.error(err);
+      });
+
+    }
+
+    // Update Amount
+    function updatePrice(){
+
+      const mins =
+        document.getElementById(
+          "timeSelect"
+        ).value;
+
+      const amount =
+        (mins / 30) * 20;
+
+      document.getElementById(
+        "priceBox"
+      ).innerText =
+        "Amount: ₹" + amount;
+
+    }
+
+    // Payment
+    // Fake Payment
+function makePayment(){
+
+  if(scannedData == ""){
+
+    alert(
+      "Please Scan Machine First"
+    );
+
+    return;
+  }
+
+  const mins =
+    document.getElementById(
+      "timeSelect"
+    ).value;
+
+  const amount =
+    (mins / 30) * 20;
+
+  // Fake Payment Popup
+  const confirmPayment =
+    confirm(
+      "Fake Payment Gateway\n\n" +
+      "Machine: " + scannedData +
+      "\nTime: " + mins + " mins" +
+      "\nAmount: ₹" + amount +
+      "\n\nClick OK to simulate payment."
+    );
+
+  // Payment Success
+  // Payment Success
+if(confirmPayment){
+
+  alert(
+    "Payment Successful!"
+  );
+
+  console.log(
+    "Machine:",
+    scannedData
+  );
+
+  console.log(
+    "Minutes:",
+    mins
+  );
+
+  // SEND TO NODE SERVER
+  fetch(
+
+    "/payment-success",
+
+    {
+
+      method:"POST",
+
+      headers:{
+        "Content-Type":
+        "application/json"
+      },
+
+      body: JSON.stringify({
+
+        machine: scannedData,
+
+        mins: mins
+
+      })
+
+    }
+
+  )
+
+  .then(res => res.json())
+
+  .then(data => {
+
+    console.log(data);
+
+    alert(
+      "Firebase Updated!"
+    );
+
+  })
+
+  .catch(err => {
+
+    console.log(err);
+
+    alert(
+      "Server Error"
+    );
+
+  });
+
+}
+
+  else{
+
+    alert(
+      "Payment Cancelled"
+    );
+
+  }
+
+}
+
+  </script>
+
+</body>
+</html>
