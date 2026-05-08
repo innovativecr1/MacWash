@@ -6,6 +6,21 @@ const admin = require("firebase-admin");
 
 const app = express();
 
+require("dotenv").config();
+
+const Razorpay =
+require("razorpay");
+
+const razorpay =
+new Razorpay({
+
+  key_id:
+  process.env.RAZORPAY_KEY_ID,
+
+  key_secret:
+  process.env.RAZORPAY_KEY_SECRET
+
+});
 // MIDDLEWARE
 app.use(cors());
 
@@ -44,7 +59,56 @@ app.get("/", (req,res)=>{
   );
 
 });
+// CREATE ORDER
+app.post(
 
+  "/create-order",
+
+  async (req,res)=>{
+
+    try{
+
+      const amount =
+      req.body.amount;
+
+      const options = {
+
+        amount:
+        amount * 100,
+
+        currency:"INR"
+
+      };
+
+      const order =
+      await razorpay.orders.create(
+        options
+      );
+
+      res.json({
+
+  ...order,
+
+  key_id:
+  process.env.RAZORPAY_KEY_ID
+
+}); 
+
+    }
+
+    catch(err){
+
+      console.log(err);
+
+      res.status(500).send(
+        "Order Error"
+      );
+
+    }
+
+  }
+
+);
 // PAYMENT ROUTE
 // PAYMENT SUCCESS
 app.post(

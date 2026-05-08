@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>McWash</title>
+  <title>MacWash</title>
 
   <!-- QR Scanner -->
   <script src="https://unpkg.com/html5-qrcode"></script>
@@ -135,7 +135,7 @@
 
   <div class="container">
 
-    <h2>McWash</h2>
+    <h2>MacWash</h2>
 
     <!-- Scan Button -->
     <button onclick="startScanner()">
@@ -292,7 +292,8 @@
 
     // Payment
     // Fake Payment
-function makePayment(){
+// PAYMENT
+async function makePayment(){
 
   if(scannedData == ""){
 
@@ -304,45 +305,18 @@ function makePayment(){
   }
 
   const mins =
-    document.getElementById(
-      "timeSelect"
-    ).value;
+  document.getElementById(
+    "timeSelect"
+  ).value;
 
   const amount =
-    (mins / 30) * 20;
+  (mins / 30) * 20;
 
-  // Fake Payment Popup
-  const confirmPayment =
-    confirm(
-      "Fake Payment Gateway\n\n" +
-      "Machine: " + scannedData +
-      "\nTime: " + mins + " mins" +
-      "\nAmount: ₹" + amount +
-      "\n\nClick OK to simulate payment."
-    );
+  // CREATE ORDER
+  const res =
+  await fetch(
 
-  // Payment Success
-  // Payment Success
-if(confirmPayment){
-
-  alert(
-    "Payment Successful!"
-  );
-
-  console.log(
-    "Machine:",
-    scannedData
-  );
-
-  console.log(
-    "Minutes:",
-    mins
-  );
-
-  // SEND TO NODE SERVER
-  fetch(
-
-    "/payment-success",
+    "/create-order",
 
     {
 
@@ -355,50 +329,92 @@ if(confirmPayment){
 
       body: JSON.stringify({
 
-        machine: scannedData,
-
-        mins: mins
+        amount: amount
 
       })
 
     }
 
-  )
+  );
 
-  .then(res => res.json())
+  const order =
+  await res.json();
 
-  .then(data => {
+  // RAZORPAY
+  const options = {
 
-    console.log(data);
+    key:
+    order.key_id ||
+    "YOUR_PUBLIC_KEY",
 
-    alert(
-      "Firebase Updated!"
-    );
+    amount:
+    order.amount,
 
-  })
+    currency:
+    order.currency,
 
-  .catch(err => {
+    order_id:
+    order.id,
 
-    console.log(err);
+    name:
+    "MacWash",
 
-    alert(
-      "Server Error"
-    );
+    description:
+    "Machine Payment",
 
-  });
+    handler:
+    async function(response){
+
+      alert(
+        "Payment Successful!"
+      );
+
+      // SEND TO SERVER
+      await fetch(
+
+        "/payment-success",
+
+        {
+
+          method:"POST",
+
+          headers:{
+            "Content-Type":
+            "application/json"
+          },
+
+          body: JSON.stringify({
+
+            machine:
+            scannedData,
+
+            mins:
+            mins
+
+          })
+
+        }
+
+      );
+
+      alert(
+        "Machine Started"
+      );
+
+    },
+
+    theme:{
+      color:"#7c3aed"
+    }
+
+  };
+
+  const rzp =
+  new Razorpay(options);
+
+  rzp.open();
 
 }
-
-  else{
-
-    alert(
-      "Payment Cancelled"
-    );
-
-  }
-
-}
-
   </script>
 
 </body>
