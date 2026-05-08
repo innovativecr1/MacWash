@@ -2,3 +2,7 @@
 serviceAccountKey.json
 node_modules
 rzp-key.csv
+.gitignore
+script.js
+style.css
+index.html
