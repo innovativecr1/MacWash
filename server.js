@@ -32,8 +32,7 @@ app.use(
 );
 
 // FIREBASE KEY
-const serviceAccount =
-require("./serviceAccountKey.json");
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
 // FIREBASE INIT
 admin.initializeApp({
